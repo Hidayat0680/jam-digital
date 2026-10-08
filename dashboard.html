@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplikasi Perhitungan Falakiyah Waktu Sholat & Kiblat</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Amiri (Arabic) -->
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+    .font-arabic {
+      font-family: 'Amiri', serif;
+    }
+    
+    /* Bounce Animation for Modals */
+    @keyframes bounceIn {
+      0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+      70% { opacity: 1; transform: scale(1.02) translateY(-5px); }
+      100% { transform: scale(1) translateY(0); }
+    }
+    .modal-bounce {
+      animation: bounceIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    
+    /* Number Rolling Effect */
+    .number-animating {
+      color: #059669;
+      font-weight: 700;
+      transition: all 0.1s ease;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar- gratification {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white">
+
+  <!-- HEADER BAR: Emerald Gradient -->
+  <header class="bg-gradient-to-r from-emerald-800 via-teal-700 to-emerald-900 text-white shadow-lg sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="bg-white/10 p-2 rounded-xl backdrop-blur-md border border-white/20">
+          <i data-lucide="compass" class="w-6 h-6 text-emerald-300"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg tracking-wide leading-tight flex items-center gap-2">
+            Falakiyah Digital <span class="text-xs bg-emerald-500/40 text-emerald-200 px-2 py-0.5 rounded-full border border-emerald-400/30">Tahap 1-3 (118 Langkah)</span>
+          </h1>
+          <p class="text-xs text-emerald-200">Hisab Waktu Sholat & Arah Kiblat Tradisional Basis-60</p>
+        </div>
+      </div>
+
+      <!-- Live Info & Quick Action Buttons -->
+      <div class="flex items-center flex-wrap gap-2 text-xs">
+        <!-- WIS (Waktu Istiwa') -->
+        <div class="bg-black/20 px-3 py-1.5 rounded-lg border border-white/10 flex items-center gap-2">
+          <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-300"></i>
+          <span>WIS (Istiwa'): <strong id="wisClock" class="text-amber-300 font-mono">12:00:00</strong></span>
+        </div>
+
+        <!-- Tanggal Hijriyah (Clickable) -->
+        <button onclick="openHijriModal()" class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg border border-white/20 transition flex items-center gap-2 cursor-pointer">
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-emerald-300"></i>
+          <span id="headerHijriDate">14 Safar 1448 H</span>
+        </button>
+
+        <!-- Location Trigger Button -->
+        <button onclick="openModal('locationModal')" class="bg-emerald-600 hover:bg-emerald-500 font-medium px-3 py-1.5 rounded-lg shadow-sm border border-emerald-400/40 transition flex items-center gap-1.5">
+          <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+          <span id="btnLocationLabel">Pasuruan (7° 39' LS)</span>
+        </button>
+
+        <!-- Date Trigger Button -->
+        <button onclick="openModal('dateModal')" class="bg-emerald-600 hover:bg-emerald-500 font-medium px-3 py-1.5 rounded-lg shadow-sm border border-emerald-400/40 transition flex items-center gap-1.5">
+          <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>
+          <span id="btnDateLabel">21 April</span>
+        </button>
+
+        <!-- Summary Trigger Button -->
+        <button onclick="openModal('summaryModal')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold px-3.5 py-1.5 rounded-lg shadow flex items-center gap-1.5 transition">
+          <i data-lucide="award" class="w-4 h-4"></i>
+          <span>Hasil Sholat & Kiblat</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 py-5 flex-1 w-full">
+    
+    <!-- Top Action Info Panel -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 mb-5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+          <i data-lucide="calculator" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h2 class="font-semibold text-slate-900 text-sm">Lembar Kerja Perhitungan (118 Langkah)</h2>
+          <p class="text-xs text-slate-500">Klik nama istilah (seperti <span class="text-emerald-600 font-medium cursor-pointer" onclick="showTermInfo('Darajat As-Syams')">دَرَجَة الشَمْس</span>) untuk melihat penjelasan ilmiahnya.</p>
+        </div>
+      </div>
+      
+      <!-- Tab Navigation for Step Sections -->
+      <div class="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium text-slate-600">
+        <button onclick="switchTab('tab-part1')" id="btn-tab-part1" class="tab-btn px-3 py-1.5 rounded-lg bg-white text-emerald-700 shadow-sm font-semibold transition">Bagian 1-3</button>
+        <button onclick="switchTab('tab-part2')" id="btn-tab-part2" class="tab-btn px-3 py-1.5 rounded-lg hover:text-slate-900 transition">Bagian 4-5</button>
+        <button onclick="switchTab('tab-part3')" id="btn-tab-part3" class="tab-btn px-3 py-1.5 rounded-lg hover:text-slate-900 transition">Bagian 6-8 (Sholat)</button>
+        <button onclick="switchTab('tab-part4')" id="btn-tab-part4" class="tab-btn px-3 py-1.5 rounded-lg hover:text-slate-900 transition">Bagian 9-10 (Kiblat)</button>
+      </div>
+    </div>
+
+    <!-- CALCULATIONS STEP-BY-STEP GRID -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+      <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <span>No & Nama Langkah / Parameter</span>
+        <span>Nilai Perhitungan (Basis-60 / Logaritma)</span>
+      </div>
+
+      <div class="divide-y divide-slate-100 max-h-[600px] overflow-y-auto" id="stepsContainer">
+        <!-- Steps dynamically generated via JS -->
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+      <p>© 2026 Perhitungan Falakiyah Tradisional Basis-60 (Kitab Sullamun Nayyirain / Ephemeris System).</p>
+      <p class="text-slate-400">Standardized Prime Meridian: Equator & London Basis</p>
+    </div>
+  </footer>
+
+  <!-- ==================== POPUP MODALS ==================== -->
+
+  <!-- 1. LOCATION MODAL -->
+  <div id="locationModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden modal-bounce">
+      <div class="bg-gradient-to-r from-emerald-700 to-teal-700 p-4 text-white flex justify-between items-center">
+        <h3 class="font-bold text-base flex items-center gap-2">
+          <i data-lucide="map-pin" class="w-5 h-5"></i> Pengaturan Lokasi & Koordinat
+        </h3>
+        <button onclick="closeModal('locationModal')" class="text-emerald-100 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      
+      <div class="p-5 space-y-4 text-sm">
+        <!-- GPS Button -->
+        <button onclick="getGPSLocation()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition">
+          <i data-lucide="navigation" class="w-4 h-4"></i> Gunakan Lokasi GPS Saat Ini
+        </button>
+
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-slate-200"></div>
+          <span class="flex-shrink mx-3 text-xs text-slate-400 font-medium uppercase">atau pilih preset kota</span>
+          <div class="flex-grow border-t border-slate-200"></div>
+        </div>
+
+        <!-- City Presets -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Preset Kota</label>
+          <select id="presetCitySelect" onchange="applyPresetCity()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="pasuruan">Pasuruan, Jawa Timur (7° 39' LS, 112° 54' BT)</option>
+            <option value="surabaya">Surabaya, Jawa Timur (7° 15' LS, 112° 45' BT)</option>
+            <option value="jakarta">Jakarta DKI (6° 12' LS, 106° 49' BT)</option>
+            <option value="makkah">Makkah Al-Mukarramah (21° 25' LU, 39° 49' BT)</option>
+          </select>
+        </div>
+
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-slate-200"></div>
+          <span class="flex-shrink mx-3 text-xs text-slate-400 font-medium uppercase">atau input manual</span>
+          <div class="flex-grow border-t border-slate-200"></div>
+        </div>
+
+        <!-- Manual Lat/Long Input -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Lintang (Ardhul Balad) -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Lintang (Ardhul Balad)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" id="latDeg" value="7" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-center text-sm">
+              <span>°</span>
+              <input type="number" id="latMin" value="39" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-center text-sm">
+              <span>'</span>
+            </div>
+            <div class="mt-1 flex gap-1">
+              <button type="button" onclick="setDir('latDir', 'S')" id="btnLatS" class="flex-1 py-1 text-xs rounded border bg-emerald-600 text-white font-medium">LS</button>
+              <button type="button" onclick="setDir('latDir', 'N')" id="btnLatN" class="flex-1 py-1 text-xs rounded border bg-slate-100 text-slate-600">LU</button>
+            </div>
+            <input type="hidden" id="latDir" value="S">
+          </div>
+
+          <!-- Bujur (Thul Balad) -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Bujur (Thul Balad)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" id="longDeg" value="112" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-center text-sm">
+              <span>°</span>
+              <input type="number" id="longMin" value="54" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-center text-sm">
+              <span>'</span>
+            </div>
+            <div class="mt-1 flex gap-1">
+              <button type="button" onclick="setDir('longDir', 'E')" id="btnLongE" class="flex-1 py-1 text-xs rounded border bg-emerald-600 text-white font-medium">BT</button>
+              <button type="button" onclick="setDir('longDir', 'W')" id="btnLongW" class="flex-1 py-1 text-xs rounded border bg-slate-100 text-slate-600">BB</button>
+            </div>
+            <input type="hidden" id="longDir" value="E">
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 p-4 border-t border-slate-100 flex justify-end">
+        <button onclick="saveLocationAndRecalculate()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2 rounded-xl text-sm transition shadow-sm">Simpan & Hitung Ulang</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. DATE MODAL -->
+  <div id="dateModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-sm w-full overflow-hidden modal-bounce">
+      <div class="bg-gradient-to-r from-emerald-700 to-teal-700 p-4 text-white flex justify-between items-center">
+        <h3 class="font-bold text-base flex items-center gap-2">
+          <i data-lucide="calendar" class="w-5 h-5"></i> Pilih Tanggal Perhitungan
+        </h3>
+        <button onclick="closeModal('dateModal')" class="text-emerald-100 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="p-5 space-y-4 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal</label>
+          <input type="number" id="inputDay" min="1" max="31" value="21" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 text-center font-bold text-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Bulan</label>
+          <select id="inputMonth" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="1">Januari</option>
+            <option value="2">Februari</option>
+            <option value="3">Maret</option>
+            <option value="4" selected>April</option>
+            <option value="5">Mei</option>
+            <option value="6">Juni</option>
+            <option value="7">Juli</option>
+            <option value="8">Agustus</option>
+            <option value="9">September</option>
+            <option value="10">Oktober</option>
+            <option value="11">November</option>
+            <option value="12">Desember</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 p-4 border-t border-slate-100 flex justify-end">
+        <button onclick="saveDateAndRecalculate()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2 rounded-xl text-sm transition shadow-sm">Simpan Tanggal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. SUMMARY RESULT MODAL -->
+  <div id="summaryModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-xl w-full overflow-hidden modal-bounce">
+      <div class="bg-gradient-to-r from-emerald-800 via-teal-700 to-emerald-900 p-4 text-white flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-base flex items-center gap-2">
+            <i data-lucide="award" class="w-5 h-5 text-amber-300"></i> Ringkasan Waktu Sholat & Kiblat
+          </h3>
+          <p class="text-xs text-emerald-200" id="summaryLocationSubtitle">Lokasi: Pasuruan | Tanggal: 21 April</p>
+        </div>
+        <button onclick="closeModal('summaryModal')" class="text-emerald-100 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <!-- Prayer Times Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <!-- Shubuh -->
+          <div class="bg-emerald-50/70 border border-emerald-100 p-3 rounded-xl text-center">
+            <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider block">Shubuh</span>
+            <span id="summaryShubuh" class="text-xl font-extrabold text-slate-800 font-mono mt-1 block">04:22:15</span>
+          </div>
+          <!-- Dhuha -->
+          <div class="bg-emerald-50/70 border border-emerald-100 p-3 rounded-xl text-center">
+            <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider block">Dhuha</span>
+            <span id="summaryDhuha" class="text-xl font-extrabold text-slate-800 font-mono mt-1 block">05:45:10</span>
+          </div>
+          <!-- Dzuhur / Istiwa -->
+          <div class="bg-emerald-50/70 border border-emerald-100 p-3 rounded-xl text-center">
+            <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider block">Dzuhur (WIS)</span>
+            <span class="text-xl font-extrabold text-slate-800 font-mono mt-1 block">12:00:00</span>
+          </div>
+          <!-- Ashar -->
+          <div class="bg-emerald-50/70 border border-emerald-100 p-3 rounded-xl text-center">
+            <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider block">Ashar</span>
+            <span id="summaryAshar" class="text-xl font-extrabold text-slate-800 font-mono mt-1 block">15:18:40</span>
+          </div>
+          <!-- Maghrib -->
+          <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-center">
+            <span class="text-xs font-bold text-amber-800 uppercase tracking-wider block">Maghrib</span>
+            <span id="summaryMaghrib" class="text-xl font-extrabold text-amber-900 font-mono mt-1 block">17:34:20</span>
+          </div>
+          <!-- Isya' -->
+          <div class="bg-emerald-50/70 border border-emerald-100 p-3 rounded-xl text-center">
+            <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider block">Isya'</span>
+            <span id="summaryIsya" class="text-xl font-extrabold text-slate-800 font-mono mt-1 block">18:44:05</span>
+          </div>
+        </div>
+
+        <!-- Extra Stats & Qibla -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 text-xs">
+          <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+            <span class="text-slate-600">Durasi Ashar s/d Maghrib:</span>
+            <span id="summaryDurasiAsharMaghrib" class="font-bold font-mono text-slate-800">02 Jam 15 Menit</span>
+          </div>
+          <div class="flex justify-between items-center pt-1">
+            <span class="text-slate-600">Arah Kiblat (<span class="font-arabic font-bold">سمت القبلة</span>):</span>
+            <span id="summaryQibla" class="font-extrabold text-emerald-700 text-sm font-mono">65° 42' (dari Utara ke Barat)</span>
+          </div>
+          <div class="text-[11px] text-slate-400 italic pt-1" id="summaryThulBaladText">
+            * Referensi koordinat Thul Balad Kota Pasuruan: 112° 54' BT
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 p-4 border-t border-slate-100 flex justify-end">
+        <button onclick="closeModal('summaryModal')" class="bg-slate-800 text-white font-semibold px-5 py-2 rounded-xl text-sm hover:bg-slate-700 transition">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. HIJRI CALENDAR POPUP MODAL -->
+  <div id="hijriModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden modal-bounce">
+      <div class="bg-gradient-to-r from-emerald-800 to-teal-800 p-4 text-white flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-base flex items-center gap-2">
+            <i data-lucide="calendar" class="w-5 h-5 text-emerald-300"></i> Kalender Hijriyah Utuh
+          </h3>
+          <p class="text-xs text-emerald-200">Bulan Safar 1448 H / Agustus 2026 M</p>
+        </div>
+        <button onclick="closeModal('hijriModal')" class="text-emerald-100 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="p-4 text-xs">
+        <div class="grid grid-cols-7 gap-1 text-center font-bold text-slate-500 mb-2">
+          <span>Ahad</span><span>Senin</span><span>Selasa</span><span>Rabu</span><span>Kamis</span><span>Jumat</span><span>Sabtu</span>
+        </div>
+        <!-- 35 Grid Cells for Calendar -->
+        <div class="grid grid-cols-7 gap-1 text-center" id="hijriCalendarGrid">
+          <!-- Cells filled dynamically -->
+        </div>
+      </div>
+
+      <div class="bg-slate-50 p-3 border-t border-slate-100 text-center text-xs text-slate-500">
+        Klik sembarang tanggal untuk melihat kecocokannya dengan tanggal Masehi.
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. SCIENTIFIC TERM EXPLANATION MODAL -->
+  <div id="termModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden modal-bounce">
+      <div class="bg-gradient-to-r from-emerald-700 to-teal-700 p-4 text-white flex justify-between items-center">
+        <h3 class="font-bold text-base flex items-center gap-2" id="termModalTitle">
+          <i data-lucide="book-open" class="w-5 h-5"></i> Deskripsi Ilmiah Istilah
+        </h3>
+        <button onclick="closeModal('termModal')" class="text-emerald-100 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="p-5 text-sm space-y-3">
+        <div class="text-xl font-arabic font-bold text-emerald-800" id="termArabicText">دَرَجَة الشَمْس</div>
+        <p class="text-slate-600 leading-relaxed text-xs sm:text-sm" id="termModalDesc">
+          Penjelasan rincian posisi matahari dan korelasinya terhadap koordinat ekliptika bumi.
+        </p>
+      </div>
+
+      <div class="bg-slate-50 p-4 border-t border-slate-100 flex justify-end">
+        <button onclick="closeModal('termModal')" class="bg-emerald-600 text-white font-semibold px-4 py-1.5 rounded-xl text-xs hover:bg-emerald-700 transition">Paham</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    /* ===================================================
+       DATABASE & DATA STATIS (BURUJ, GLOSSARY, PRESETS)
+       =================================================== */
+    const BURUJ_TABLE = [
+      { month: 1, name: "Jaddi / Dalwu", tafawut: 10, darajatBuruj: 270, dir: "S" },
+      { month: 2, name: "Dalwu / Hut", tafawut: 10, darajatBuruj: 300, dir: "S" },
+      { month: 3, name: "Hut / Hamal", tafawut: 10, darajatBuruj: 330, dir: "S" },
+      { month: 4, name: "Hamal / Tsaur", tafawut: 10, darajatBuruj: 0, dir: "N" },
+      { month: 5, name: "Tsaur / Jauza", tafawut: 11, darajatBuruj: 30, dir: "N" },
+      { month: 6, name: "Jauza / Sarthan", tafawut: 11, darajatBuruj: 60, dir: "N" },
+      { month: 7, name: "Sarthan / Asad", tafawut: 11, darajatBuruj: 90, dir: "N" },
+      { month: 8, name: "Asad / Sunbulah", tafawut: 11, darajatBuruj: 120, dir: "N" },
+      { month: 9, name: "Sunbulah / Mizan", tafawut: 11, darajatBuruj: 150, dir: "N" },
+      { month: 10, name: "Mizan / Aqrab", tafawut: 10, darajatBuruj: 180, dir: "S" },
+      { month: 11, name: "Aqrab / Qaus", tafawut: 10, darajatBuruj: 210, dir: "S" },
+      { month: 12, name: "Qaus / Jaddi", tafawut: 10, darajatBuruj: 240, dir: "S" }
+    ];
+
+    const TERM_GLOSSARY = {
+      "Tafawut": { ar: "التفاوت", desc: "Nilai selisih/koreksi pergerakan rata-rata matahari harian berdasarkan bulan Masehi." },
+      "Darajat As-Syams": { ar: "درجة الشمس", desc: "Posisi bujur astronomis matahari pada lingkaran ekliptika (orbit bumi mengelilingi matahari)." },
+      "Buruj Awal": { ar: "البروج", desc: "Rasi bintang (Zodiak Astronomis) yang sedang dilintasi oleh Matahari pada bulan tersebut." },
+      "Al-Majmu'ah": { ar: "المجموع", desc: "Total penjumlahan bujur matahari dengan derajat dasar zodiak terkait." },
+      "Bu'dud Darajah": { ar: "بعد الدرجة", desc: "Jarak busur sudut derajat matahari diukur dari titik ekuator / meridian acuan." },
+      "Al-Mail Al-Awwal": { ar: "الميل الأول", desc: "Deklinasi matahari awal (sudut kemiringan posisi matahari relatif terhadap garis ekuator langit)." },
+      "Tamam Al-Ghayah": { ar: "تمام الغاية", desc: "Pelengkap sudut zenith titik kulminasi matahari diukur terhadap meridian lokal tempat pengamatan." },
+      "Ghayah Al-Irtifa'": { ar: "غاية الارتفاع", desc: "Ketinggian maksimum puncak matahari (kulminasi atas / waktu dzuhur) di atas horizon." },
+      "Al-Ashl Al-Mutlaq": { ar: "الأصل المطلق", desc: "Nilai konstanta trigonometri dasar trigonometrik ruang yang digunakan untuk menghitung sudut waktu sholat." },
+      "Nishful Fadhla": { ar: "نصف فضلة", desc: "Setengah beda busur siang/malam (selisih setengah panjang siang dari 12 jam tepat)." },
+      "Samt Al-Qiblah": { ar: "سمت القبلة", desc: "Azimut arah Kiblat dihitung dari titik Utara sejati melingkar ke arah Barat menuju Ka'bah di Makkah." }
+    };
+
+    /* ===================================================
+       STATE GLOBAL APLIKASI
+       =================================================== */
+    let appState = {
+      day: 21,
+      month: 4,
+      cityName: "Pasuruan",
+      latDeg: 7,
+      latMin: 39,
+      latDir: "S", // S = Selatan, N = Utara
+      longDeg: 112,
+      longMin: 54,
+      longDir: "E", // E = Timur, W = Barat
+      activeTab: "tab-part1"
+    };
+
+    // Store raw calculations 1-118
+    let stepsData = [];
+
+    /* ===================================================
+       HELPER MATH & FALAK (BASIS-60 & LOGARITMA)
+       =================================================== */
+    function degToDec(deg, min = 0, sec = 0) {
+      return deg + (min / 60) + (sec / 3600);
+    }
+
+    function decToDegMinSec(val) {
+      const sign = val < 0 ? -1 : 1;
+      let absVal = Math.abs(val);
+      let deg = Math.floor(absVal);
+      let remMin = (absVal - deg) * 60;
+      let min = Math.floor(remMin);
+      let sec = Math.round((remMin - min) * 60);
+
+      if (sec >= 60) { sec -= 60; min += 1; }
+      if (min >= 60) { min -= 60; deg += 1; }
+
+      return { deg: deg * sign, min, sec };
+    }
+
+    function formatDMS(dmsObj) {
+      return `${dmsObj.deg}° ${dmsObj.min}' ${dmsObj.sec ? dmsObj.sec + '"' : ''}`.trim();
+    }
+
+    function formatHM(h, m, s) {
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
+
+    // Custom Logsin / Logcos / Sinus (Rule 2, 3, 4 Basis-60)
+    function getLogsin(deg, min = 0) {
+      const rad = degToDec(deg, min) * (Math.PI / 180);
+      const val = Math.log10(Math.sin(rad)) + 10;
+      return parseFloat(val.toFixed(5));
+    }
+
+    function getLogcos(deg, min = 0) {
+      const rad = degToDec(deg, min) * (Math.PI / 180);
+      const val = Math.log10(Math.cos(rad)) + 10;
+      return parseFloat(val.toFixed(5));
+    }
+
+    function getSinus(deg, min = 0) {
+      const rad = degToDec(deg, min) * (Math.PI / 180);
+      return parseFloat(Math.sin(rad).toFixed(5));
+    }
+
+    // Reverse Lookups (Aturan: Tidak boleh melebihi / pembulatan ke bawah)
+    function reverseLogsin(logsinVal) {
+      let normLog = logsinVal > 10 ? logsinVal - 10 : logsinVal - 10;
+      let sinVal = Math.pow(10, normLog);
+      sinVal = Math.max(-1, Math.min(1, sinVal));
+      let rad = Math.asin(sinVal);
+      let decDeg = rad * (180 / Math.PI);
+      return decToDegMinSec(decDeg);
+    }
+
+    function reverseLogcos(logcosVal) {
+      let normLog = logcosVal > 10 ? logcosVal - 10 : logcosVal - 10;
+      let cosVal = Math.pow(10, normLog);
+      cosVal = Math.max(-1, Math.min(1, cosVal));
+      let rad = Math.acos(cosVal);
+      let decDeg = rad * (180 / Math.PI);
+      return decToDegMinSec(decDeg);
+    }
+
+    function reverseSinus(sinVal) {
+      let clamped = Math.max(-1, Math.min(1, sinVal));
+      let rad = Math.asin(clamped);
+      let decDeg = rad * (180 / Math.PI);
+      return decToDegMinSec(decDeg);
+    }
+
+    function reverseCotg(cotgVal) {
+      let rad = Math.atan(1 / cotgVal);
+      let decDeg = rad * (180 / Math.PI);
+      return decToDegMinSec(decDeg);
+    }
+
+    // Step 44 Diagonal Box Conversion Logic (Pengali 4)
+    function convertToTimeBox(deg, min) {
+      let totalMinutesTimes4 = min * 4;
+      let sisaDetik = totalMinutesTimes4 % 60;
+      let sisaMenit = Math.floor(totalMinutesTimes4 / 60);
+
+      let totalDegTimes4 = deg * 4;
+      let menitMaghrib = (totalDegTimes4 % 60) + sisaMenit;
+      let jamMaghrib = Math.floor(totalDegTimes4 / 60);
+
+      if (menitMaghrib >= 60) {
+        jamMaghrib += Math.floor(menitMaghrib / 60);
+        menitMaghrib %= 60;
+      }
+
+      return { h: jamMaghrib, m: menitMaghrib, s: sisaDetik };
+    }
+
+
+    /* ===================================================
+       ALGORITMA LENGKAP TAHAP 1 - TAHAP 3 (STEPS 1 TO 118)
+       =================================================== */
+    function runCalculations() {
+      stepsData = [];
+
+      const burujData = BURUJ_TABLE.find(b => b.month === appState.month) || BURUJ_TABLE[3];
+      
+      // [BAGIAN 1: DATA AWAL]
+      // Step 1: Tanggal
+      const step1 = { num: 1, name: "Tanggal Input", val: `${appState.day}° 0'`, part: 1 };
+      // Step 2: Tafawut
+      const step2 = { num: 2, name: "Tafawut Bulan", val: `${burujData.tafawut}° 0'`, part: 1 };
+      // Step 3: Buruj Awal
+      let burujAwal = burujData.month - 1;
+      const step3 = { num: 3, name: "Buruj Awal", val: `${burujAwal} (${burujData.name})`, part: 1 };
+      // Step 4: Darajat As-Syams
+      let rawSyams = appState.day + burujData.tafawut;
+      if (rawSyams > 30) {
+        rawSyams -= 30;
+        burujAwal += 1;
+      }
+      const step4 = { num: 4, name: "Darajat As-Syams", val: `${rawSyams}° 0' (Buruj Update: ${burujAwal})`, part: 1 };
+      // Step 5: Darajat Al-Buruj
+      const darajatBuruj = (burujAwal % 12) * 30;
+      const step5 = { num: 5, name: "Darajat Al-Buruj", val: `${darajatBuruj}° 0'`, part: 1 };
+      // Step 6: Al-Majmu'ah
+      const majmuah = rawSyams + darajatBuruj;
+      const step6 = { num: 6, name: "Al-Majmu'ah", val: `${majmuah}° 0'`, part: 1 };
+      // Step 7: Qa'idah 90
+      const step7 = { num: 7, name: "Qa'idah 90", val: "90° 0'", part: 1 };
+      // Step 8: Bu'dud Darajah
+      let bududDarajah = majmuah;
+      if ([3,4,5,9,10,11].includes(burujAwal % 12)) {
+        bududDarajah = 90 - (majmuah % 90);
+      } else {
+        bududDarajah = majmuah % 90;
+      }
+      const step8 = { num: 8, name: "Bu'dud Darajah", val: `${bududDarajah}° 0'`, part: 1 };
+
+      // [BAGIAN 2: MAIL AWAL & GAYAH IRTIFA]
+      // Step 9: Logsin Bu'dud Darajah
+      const logsinBudud = getLogsin(bududDarajah, 0);
+      const step9 = { num: 9, name: "Logsin Bu'dud Darajah", val: logsinBudud.toFixed(5), part: 1 };
+      // Step 10: Al-Mail Al-A'dzam
+      const step10 = { num: 10, name: "Al-Mail Al-A'dzam", val: "23° 27' (Logsin: 9.59983)", part: 1 };
+      // Step 11: Logsin Al-Mail Al-Awwal
+      let logsinMailAwwal = logsinBudud + 9.59983;
+      if (logsinMailAwwal > 10.000) logsinMailAwwal -= 10.000;
+      const step11 = { num: 11, name: "Logsin Al-Mail Al-Awwal", val: logsinMailAwwal.toFixed(5), part: 1 };
+      // Step 12: Al-Mail Al-Awwal (DMS)
+      const mailAwwalDMS = reverseLogsin(logsinMailAwwal);
+      const step12 = { num: 12, name: "Al-Mail Al-Awwal (DMS)", val: formatDMS(mailAwwalDMS), part: 1 };
+      // Step 13: Ardhul Balad
+      const ardhulBaladDMS = { deg: appState.latDeg, min: appState.latMin, sec: 0 };
+      const step13 = { num: 13, name: "Ardhul Balad (Latitude)", val: `${formatDMS(ardhulBaladDMS)} (${appState.latDir})`, part: 1 };
+      // Step 14: Tamam Al-Ghayah
+      const isSameDir = (burujData.dir === appState.latDir);
+      let tamamGhayahDec = isSameDir ? 
+        Math.abs(degToDec(mailAwwalDMS.deg, mailAwwalDMS.min) - degToDec(appState.latDeg, appState.latMin)) :
+        (degToDec(mailAwwalDMS.deg, mailAwwalDMS.min) + degToDec(appState.latDeg, appState.latMin));
+      const tamamGhayahDMS = decToDegMinSec(tamamGhayahDec);
+      const step14 = { num: 14, name: "Tamam Al-Ghayah", val: formatDMS(tamamGhayahDMS), part: 1 };
+      // Step 15: Ghayah Al-Irtifa'
+      const ghayahIrtifaDec = 90 - tamamGhayahDec;
+      const ghayahIrtifaDMS = decToDegMinSec(ghayahIrtifaDec);
+      const step15 = { num: 15, name: "Ghayah Al-Irtifa'", val: formatDMS(ghayahIrtifaDMS), part: 1 };
+
+      // [BAGIAN 3: BU'DUL QUTHR & AL-ASHL AL-MUTLAQ]
+      // Step 16: Logsin Ardhul Balad
+      const logsinArdhul = getLogsin(appState.latDeg, appState.latMin);
+      const step16 = { num: 16, name: "Logsin Ardhul Balad", val: logsinArdhul.toFixed(5), part: 1 };
+      // Step 17: Logsin Bu'dul Quthr
+      let logsinBudulQuthr = logsinMailAwwal + logsinArdhul;
+      if (logsinBudulQuthr > 10.000) logsinBudulQuthr -= 10.000;
+      const step17 = { num: 17, name: "Logsin Bu'dul Quthr", val: logsinBudulQuthr.toFixed(5), part: 1 };
+      // Step 18: Bu'dul Quthr (DMS)
+      const budulQuthrDMS = reverseLogsin(logsinBudulQuthr);
+      const step18 = { num: 18, name: "Bu'dul Quthr (DMS)", val: formatDMS(budulQuthrDMS), part: 1 };
+      // Step 19: Logcos Al-Mail Al-Awwal
+      const logcosMailAwwal = getLogcos(mailAwwalDMS.deg, mailAwwalDMS.min);
+      const step19 = { num: 19, name: "Logcos Al-Mail Al-Awwal", val: logcosMailAwwal.toFixed(5), part: 1 };
+      // Step 20: Logcos Ardhul Balad
+      const logcosArdhul = getLogcos(appState.latDeg, appState.latMin);
+      const step20 = { num: 20, name: "Logcos Ardhul Balad", val: logcosArdhul.toFixed(5), part: 1 };
+      // Step 21: Logsin Al-Ashl Al-Mutlaq
+      let logsinAshlMutlaq = logcosMailAwwal + logcosArdhul;
+      if (logsinAshlMutlaq > 10.000) logsinAshlMutlaq -= 10.000;
+      const step21 = { num: 21, name: "Logsin Al-Ashl Al-Mutlaq", val: logsinAshlMutlaq.toFixed(5), part: 1 };
+      // Step 22: Al-Ashl Al-Mutlaq (DMS)
+      const ashlMutlaqDMS = reverseLogsin(logsinAshlMutlaq);
+      const step22 = { num: 22, name: "Al-Ashl Al-Mutlaq (DMS)", val: formatDMS(ashlMutlaqDMS), part: 1 };
+
+      // [BAGIAN 4: NISHFUL FADHLAH & AL-BAQI]
+      // Step 23: Logsin Nishful Fadhla
+      const logsinNishfulFadhla = (logsinBudulQuthr + 10.000) - logsinAshlMutlaq;
+      const step23 = { num: 23, name: "Logsin Nishful Fadhla", val: logsinNishfulFadhla.toFixed(5), part: 2 };
+      // Step 24: Nishful Fadhla (DMS)
+      const nishfulFadhlaDMS = reverseLogsin(logsinNishfulFadhla);
+      const step24 = { num: 24, name: "Nishful Fadhla (DMS)", val: formatDMS(nishfulFadhlaDMS), part: 2 };
+      // Step 25: Al-Qaws 1
+      const step25 = { num: 25, name: "Al-Qaws 1", val: "0° 33' 30\" (Sin: 0.00975)", part: 2 };
+      // Step 26: Sinus Bu'dul Quthr
+      const sinBudulQuthr = getSinus(budulQuthrDMS.deg, budulQuthrDMS.min);
+      const step26 = { num: 26, name: "Sinus Bu'dul Quthr", val: sinBudulQuthr.toFixed(5), part: 2 };
+      // Step 27: Sinus Al-Mujtama' 1
+      const sinMujtama1 = 0.00975 + sinBudulQuthr;
+      const step27 = { num: 27, name: "Sinus Al-Mujtama' 1", val: sinMujtama1.toFixed(5), part: 2 };
+      // Step 28: Al-Mujtama' 1 (DMS)
+      const mujtama1DMS = reverseSinus(sinMujtama1);
+      const step28 = { num: 28, name: "Al-Mujtama' 1 (DMS)", val: formatDMS(mujtama1DMS), part: 2 };
+      // Step 29: Logsin Al-Mujtama' 1
+      const logsinMujtama1 = getLogsin(mujtama1DMS.deg, mujtama1DMS.min);
+      const step29 = { num: 29, name: "Logsin Al-Mujtama' 1", val: logsinMujtama1.toFixed(5), part: 2 };
+      // Step 30: Logsin Al-Baqi 1
+      const logsinBaqi1 = (logsinMujtama1 + 10.000) - logsinAshlMutlaq;
+      const step30 = { num: 30, name: "Logsin Al-Baqi 1", val: logsinBaqi1.toFixed(5), part: 2 };
+      // Step 31: Al-Baqi 1 (DMS)
+      const baqi1DMS = reverseLogsin(logsinBaqi1);
+      const step31 = { num: 31, name: "Al-Baqi 1 (DMS)", val: formatDMS(baqi1DMS), part: 2 };
+
+      // [BAGIAN 5: NISHFU QUTHR AS-SYAMS & WAKTU MAGHRIB/TULU']
+      // Step 32: Hasil Sementara
+      let hasilSementaraDec = degToDec(baqi1DMS.deg, baqi1DMS.min) - degToDec(nishfulFadhlaDMS.deg, nishfulFadhlaDMS.min);
+      const hasilSementaraDMS = decToDegMinSec(hasilSementaraDec);
+      const step32 = { num: 32, name: "Hasil Sementara", val: formatDMS(hasilSementaraDMS), part: 2 };
+      // Step 33: Al-Qaws 2
+      const step33 = { num: 33, name: "Al-Qaws 2", val: "0° 15' (Sin: 0.00436)", part: 2 };
+      // Step 34: Sinus Al-Mujtama' 2
+      const sinMujtama2 = 0.00436 + sinBudulQuthr;
+      const step34 = { num: 34, name: "Sinus Al-Mujtama' 2", val: sinMujtama2.toFixed(5), part: 2 };
+      // Step 35: Al-Mujtama' 2 (DMS)
+      const mujtama2DMS = reverseSinus(sinMujtama2);
+      const step35 = { num: 35, name: "Al-Mujtama' 2 (DMS)", val: formatDMS(mujtama2DMS), part: 2 };
+      // Step 36: Logsin Al-Mujtama' 2
+      const logsinMujtama2 = getLogsin(mujtama2DMS.deg, mujtama2DMS.min);
+      const step36 = { num: 36, name: "Logsin Al-Mujtama' 2", val: logsinMujtama2.toFixed(5), part: 2 };
+      // Step 37: Logsin Al-Baqi 2
+      const logsinBaqi2 = (logsinMujtama2 + 10.000) - logsinAshlMutlaq;
+      const step37 = { num: 37, name: "Logsin Al-Baqi 2", val: logsinBaqi2.toFixed(5), part: 2 };
+      // Step 38: Al-Baqi 2 (DMS)
+      const baqi2DMS = reverseLogsin(logsinBaqi2);
+      const step38 = { num: 38, name: "Al-Baqi 2 (DMS)", val: formatDMS(baqi2DMS), part: 2 };
+      // Step 39: Nishfu Quthr As-Syams
+      let nishfuQuthrSyamsDec = degToDec(baqi2DMS.deg, baqi2DMS.min) - degToDec(nishfulFadhlaDMS.deg, nishfulFadhlaDMS.min);
+      const nishfuQuthrSyamsDMS = decToDegMinSec(nishfuQuthrSyamsDec);
+      const step39 = { num: 39, name: "Nishfu Quthr As-Syams", val: formatDMS(nishfuQuthrSyamsDMS), part: 2 };
+      // Step 40: Daqoiq Al-Ikhtilaf
+      const daqoiqIkhtilafDMS = { deg: 0, min: 2, sec: 0 };
+      const step40 = { num: 40, name: "Daqoiq Al-Ikhtilaf", val: formatDMS(daqoiqIkhtilafDMS), part: 2 };
+      // Step 41: Daqoiq At-Tamkiniyyah
+      let daqoiqTamkiniyyahDec = degToDec(nishfuQuthrSyamsDMS.deg, nishfuQuthrSyamsDMS.min) + degToDec(daqoiqIkhtilafDMS.deg, daqoiqIkhtilafDMS.min);
+      const daqoiqTamkiniyyahDMS = decToDegMinSec(daqoiqTamkiniyyahDec);
+      const step41 = { num: 41, name: "Daqoiq At-Tamkiniyyah", val: formatDMS(daqoiqTamkiniyyahDMS), part: 2 };
+      // Step 42: Nishfu Qaws An-Nahar Al-Haqiqi
+      let nishfuNaharHaqiqiDec = isSameDir ? (90 + degToDec(nishfulFadhlaDMS.deg, nishfulFadhlaDMS.min)) : (90 - degToDec(nishfulFadhlaDMS.deg, nishfulFadhlaDMS.min));
+      const nishfuNaharHaqiqiDMS = decToDegMinSec(nishfuNaharHaqiqiDec);
+      const step42 = { num: 42, name: "Nishfu Qaws An-Nahar Al-Haqiqi", val: formatDMS(nishfuNaharHaqiqiDMS), part: 2 };
+      // Step 43: Nishfu Qaws An-Nahar Al-Mar'i (Maghrib)
+      let nishfuNaharMar'iMaghribDec = nishfuNaharHaqiqiDec + daqoiqTamkiniyyahDec;
+      const nishfuNaharMar'iMaghribDMS = decToDegMinSec(nishfuNaharMar'iMaghribDec);
+      const step43 = { num: 43, name: "Nishfu Qaws An-Nahar Al-Mar'i (Maghrib)", val: formatDMS(nishfuNaharMar'iMaghribDMS), part: 2 };
+      // Step 44: Jamia Maghrib
+      const jamiaMaghribHM = convertToTimeBox(nishfuNaharMar'iMaghribDMS.deg, nishfuNaharMar'iMaghribDMS.min);
+      const step44 = { num: 44, name: "Jamia Maghrib (Waktu Maghrib)", val: formatHM(jamiaMaghribHM.h, jamiaMaghribHM.m, jamiaMaghribHM.s), part: 2 };
+      // Step 45: Nishfu Qaws Al-Lail Al-Mar'i (Tulu')
+      let nishfuLailMar'iTuluDec = 180 - nishfuNaharMar'iMaghribDec;
+      const nishfuLailMar'iTuluDMS = decToDegMinSec(nishfuLailMar'iTuluDec);
+      const step45 = { num: 45, name: "Nishfu Qaws Al-Lail Al-Mar'i (Tulu')", val: formatDMS(nishfuLailMar'iTuluDMS), part: 2 };
+      // Step 46: Jamia Tulu'
+      const jamiaTuluHM = convertToTimeBox(nishfuLailMar'iTuluDMS.deg, nishfuLailMar'iTuluDMS.min);
+      const step46 = { num: 46, name: "Jamia Tulu' (Waktu Terbit)", val: formatHM(jamiaTuluHM.h, jamiaTuluHM.m, jamiaTuluHM.s), part: 2 };
+
+      // [BAGIAN 6: WAKTU ISYA']
+      // Step 47: Inhifadz Isya'
+      const step47 = { num: 47, name: "Inhifadz Isya'", val: "17° 0' (Logsin: 9.46594)", part: 3 };
+      // Step 48: Logsin Al-Ashl Al-Mutlaq
+      const step48 = { num: 48, name: "Logsin Al-Ashl Al-Mutlaq", val: logsinAshlMutlaq.toFixed(5), part: 3 };
+      // Step 49: Logsin Al-Baqi 3
+      const logsinBaqi3 = (9.46594 + 10.000) - logsinAshlMutlaq;
+      const step49 = { num: 49, name: "Logsin Al-Baqi 3", val: logsinBaqi3.toFixed(5), part: 3 };
+      // Step 50: Al-Baqi 3 (DMS)
+      const baqi3DMS = reverseLogsin(logsinBaqi3);
+      const step50 = { num: 50, name: "Al-Baqi 3 (DMS)", val: formatDMS(baqi3DMS), part: 3 };
+      // Step 51: Sinus Al-Baqi 3
+      const sinBaqi3 = getSinus(baqi3DMS.deg, baqi3DMS.min);
+      const step51 = { num: 51, name: "Sinus Al-Baqi 3", val: sinBaqi3.toFixed(5), part: 3 };
+      // Step 52: Sinus Nishful Fadhlah
+      const sinNishfulFadhla = getSinus(nishfulFadhlaDMS.deg, nishfulFadhlaDMS.min);
+      const step52 = { num: 52, name: "Sinus Nishful Fadhlah", val: sinNishfulFadhla.toFixed(5), part: 3 };
+      // Step 53: Sinus Al-Hasil 1
+      const sinHasil1 = isSameDir ? (sinBaqi3 + sinNishfulFadhla) : (sinBaqi3 - sinNishfulFadhla);
+      const step53 = { num: 53, name: "Sinus Al-Hasil 1", val: sinHasil1.toFixed(5), part: 3 };
+      // Step 54: Al-Hasil 1 (DMS)
+      const hasil1DMS = reverseSinus(sinHasil1);
+      const step54 = { num: 54, name: "Al-Hasil 1 (DMS)", val: formatDMS(hasil1DMS), part: 3 };
+      // Step 55: Hishoh As-Syafaq
+      let hishohSyafaqDec = isSameDir ? 
+        (degToDec(hasil1DMS.deg, hasil1DMS.min) - degToDec(nishfulFadhlaDMS.deg, nishfulFadhlaDMS.min)) :
+        (degToDec(hasil1DMS.deg, hasil1DMS.min) + degToDec(nishfulFadhlaDMS.deg, nishfulFadhlaDMS.min));
+      const hishohSyafaqDMS = decToDegMinSec(hishohSyafaqDec);
+      const step55 = { num: 55, name: "Hishoh As-Syafaq", val: formatDMS(hishohSyafaqDMS), part: 3 };
+      // Step 56: Awal Waktu Isya'
+      let awalIsyaDec = hishohSyafaqDec + nishfuNaharMar'iMaghribDec;
+      const awalIsyaDMS = decToDegMinSec(awalIsyaDec);
+      const step56 = { num: 56, name: "Awal Waktu Isya' (Deg)", val: formatDMS(awalIsyaDMS), part: 3 };
+      // Step 57: Jamia Isya'
+      const jamiaIsyaHM = convertToTimeBox(awalIsyaDMS.deg, awalIsyaDMS.min);
+      const step57 = { num: 57, name: "Jamia Isya' (Waktu Isya')", val: formatHM(jamiaIsyaHM.h, jamiaIsyaHM.m, jamiaIsyaHM.s), part: 3 };
+
+      // [BAGIAN 7: WAKTU SHUBUH]
+      // Step 58: Inhifadz Shubuh
+      const step58 = { num: 58, name: "Inhifadz Shubuh", val: "19° 0' (Logsin: 9.51264)", part: 3 };
+      // Step 59: Logsin Al-Baqi 4
+      const logsinBaqi4 = (9.51264 + 10.000) - logsinAshlMutlaq;
+      const step59 = { num: 59, name: "Logsin Al-Baqi 4", val: logsinBaqi4.toFixed(5), part: 3 };
+      // Step 60: Al-Baqi 4 (DMS)
+      const baqi4DMS = reverseLogsin(logsinBaqi4);
+      const step60 = { num: 60, name: "Al-Baqi 4 (DMS)", val: formatDMS(baqi4DMS), part: 3 };
+      // Step 61: Sinus Al-Baqi 4
+      const sinBaqi4 = getSinus(baqi4DMS.deg, baqi4DMS.min);
+      const step61 = { num: 61, name: "Sinus Al-Baqi 4", val: sinBaqi4.toFixed(5), part: 3 };
+      // Step 62: Sinus Al-Hasil 2
+      const sinHasil2 = isSameDir ? (sinBaqi4 + sinNishfulFadhla) : (sinBaqi4 - sinNishfulFadhla);
+      const step62 = { num: 62, name: "Sinus Al-Hasil 2", val: sinHasil2.toFixed(5), part: 3 };
+      // Step 63: Al-Hasil 2 (DMS)
+      const hasil2DMS = reverseSinus(sinHasil2);
+      const step63 = { num: 63, name: "Al-Hasil 2 (DMS)", val: formatDMS(hasil2DMS), part: 3 };
+      // Step 64: Hishoh Al-Fajr
+      let hishohFajrDec = isSameDir ? 
+        (degToDec(hasil2DMS.deg, hasil2DMS.min) - degToDec(nishfulFadhlaDMS.deg, nishfulFadhlaDMS.min)) :
+        (degToDec(hasil2DMS.deg, hasil2DMS.min) + degToDec(nishfulFadhlaDMS.deg, nishfulFadhlaDMS.min));
+      const hishohFajrDMS = decToDegMinSec(hishohFajrDec);
+      const step64 = { num: 64, name: "Hishoh Al-Fajr", val: formatDMS(hishohFajrDMS), part: 3 };
+      // Step 65: Awal Waktu Shubuh
+      let awalShubuhDec = nishfuLailMar'iTuluDec - hishohFajrDec;
+      const awalShubuhDMS = decToDegMinSec(awalShubuhDec);
+      const step65 = { num: 65, name: "Awal Waktu Shubuh (Deg)", val: formatDMS(awalShubuhDMS), part: 3 };
+      // Step 66: Jamia Shubuh
+      const jamiaShubuhHM = convertToTimeBox(awalShubuhDMS.deg, awalShubuhDMS.min);
+      const step66 = { num: 66, name: "Jamia Shubuh (Waktu Shubuh)", val: formatHM(jamiaShubuhHM.h, jamiaShubuhHM.m, jamiaShubuhHM.s), part: 3 };
+
+      // [BAGIAN 8: WAKTU DHUHA]
+      // Step 67: Irtifa' Dhuha
+      const step67 = { num: 67, name: "Irtifa' Dhuha", val: "4° 30' (Sin: 0.0785)", part: 3 };
+      // Step 68: Sinus Bu'dul Quthr
+      const step68 = { num: 68, name: "Sinus Bu'dul Quthr", val: sinBudulQuthr.toFixed(5), part: 3 };
+      // Step 69: Sinus Al-Mu'addal
+      const sinMuaddal = isSameDir ? (0.0785 - sinBudulQuthr) : (0.0785 + sinBudulQuthr);
+      const step69 = { num: 69, name: "Sinus Al-Mu'addal", val: sinMuaddal.toFixed(5), part: 3 };
+      // Step 70: Al-Mu'addal (DMS)
+      const muaddalDMS = reverseSinus(sinMuaddal);
+      const step70 = { num: 70, name: "Al-Mu'addal (DMS)", val: formatDMS(muaddalDMS), part: 3 };
+      // Step 71: Logsin Al-Mu'addal
+      const logsinMuaddal = getLogsin(muaddalDMS.deg, muaddalDMS.min);
+      const step71 = { num: 71, name: "Logsin Al-Mu'addal", val: logsinMuaddal.toFixed(5), part: 3 };
+      // Step 72: Logsin Tamam Fadhl Ad-Dair
+      const logsinTamamFadhlDair = (logsinMuaddal + 10.000) - logsinAshlMutlaq;
+      const step72 = { num: 72, name: "Logsin Tamam Fadhl Ad-Dair", val: logsinTamamFadhlDair.toFixed(5), part: 3 };
+      // Step 73: Tamam Fadhl Ad-Dair (DMS)
+      const tamamFadhlDairDMS = reverseLogsin(logsinTamamFadhlDair);
+      const step73 = { num: 73, name: "Tamam Fadhl Ad-Dair (DMS)", val: formatDMS(tamamFadhlDairDMS), part: 3 };
+      // Step 74: Jam Tamam Fadhl Ad-Dair
+      const jamTamamFadhlHM = convertToTimeBox(tamamFadhlDairDMS.deg, tamamFadhlDairDMS.min);
+      const step74 = { num: 74, name: "Jam Tamam Fadhl Ad-Dair", val: formatHM(jamTamamFadhlHM.h, jamTamamFadhlHM.m, jamTamamFadhlHM.s), part: 3 };
+      // Step 75: Jamia Dhuha
+      const jamiaDhuhaHM = { h: jamTamamFadhlHM.h + 6, m: jamTamamFadhlHM.m, s: jamTamamFadhlHM.s };
+      const step75 = { num: 75, name: "Jamia Dhuha (Waktu Dhuha)", val: formatHM(jamiaDhuhaHM.h, jamiaDhuhaHM.m, jamiaDhuhaHM.s), part: 3 };
+
+      // [BAGIAN 9: WAKTU ASHAR & DURASI ASR-MAGHRIB]
+      // Step 76: Ghayah Al-Irtifa' Cotg
+      const cotgGhayahIrtifa = 1 / Math.tan(degToDec(ghayahIrtifaDMS.deg, ghayahIrtifaDMS.min) * (Math.PI / 180));
+      const step76 = { num: 76, name: "Cotg Ghayah Al-Irtifa'", val: cotgGhayahIrtifa.toFixed(5), part: 4 };
+      // Step 77: Al-Qamah
+      const step77 = { num: 77, name: "Al-Qamah", val: "45° (Cotg: 1.00000)", part: 4 };
+      // Step 78: Cotg Irtifa' Al-Asr
+      const cotgIrtifaAsr = cotgGhayahIrtifa + 1.00000;
+      const step78 = { num: 78, name: "Cotg Irtifa' Al-Asr", val: cotgIrtifaAsr.toFixed(5), part: 4 };
+      // Step 79: Irtifa' Al-Asr (DMS)
+      const irtifaAsrDMS = reverseCotg(cotgIrtifaAsr);
+      const step79 = { num: 79, name: "Irtifa' Al-Asr (DMS)", val: formatDMS(irtifaAsrDMS), part: 4 };
+      // Step 80: Sinus Irtifa' Al-Asr
+      const sinIrtifaAsr = getSinus(irtifaAsrDMS.deg, irtifaAsrDMS.min);
+      const step80 = { num: 80, name: "Sinus Irtifa' Al-Asr", val: sinIrtifaAsr.toFixed(5), part: 4 };
+      // Step 81: Sinus Bu'dul Quthr
+      const step81 = { num: 81, name: "Sinus Bu'dul Quthr", val: sinBudulQuthr.toFixed(5), part: 4 };
+      // Step 82: Sinus Al-Mu'addal 2
+      const sinMuaddal2 = isSameDir ? (sinIrtifaAsr - sinBudulQuthr) : (sinIrtifaAsr + sinBudulQuthr);
+      const step82 = { num: 82, name: "Sinus Al-Mu'addal 2", val: sinMuaddal2.toFixed(5), part: 4 };
+      // Step 83: Al-Mu'addal 2 (DMS)
+      const muaddal2DMS = reverseSinus(sinMuaddal2);
+      const step83 = { num: 83, name: "Al-Mu'addal 2 (DMS)", val: formatDMS(muaddal2DMS), part: 4 };
+      // Step 84: Logsin Al-Mu'addal 2
+      const logsinMuaddal2 = getLogsin(muaddal2DMS.deg, muaddal2DMS.min);
+      const step84 = { num: 84, name: "Logsin Al-Mu'addal 2", val: logsinMuaddal2.toFixed(5), part: 4 };
+      // Step 85: Logsin Tamam Fadhl Ad-Dair 2
+      const logsinTamamFadhlDair2 = (logsinMuaddal2 + 10.000) - logsinAshlMutlaq;
+      const step85 = { num: 85, name: "Logsin Tamam Fadhl Ad-Dair 2", val: logsinTamamFadhlDair2.toFixed(5), part: 4 };
+      // Step 86: Tamam Fadhl Ad-Dair 2 (DMS)
+      const tamamFadhlDair2DMS = reverseLogsin(logsinTamamFadhlDair2);
+      const step86 = { num: 86, name: "Tamam Fadhl Ad-Dair 2 (DMS)", val: formatDMS(tamamFadhlDair2DMS), part: 4 };
+      // Step 87: Fadhl Ad-Dair
+      let fadhlDairDec = 90 - degToDec(tamamFadhlDair2DMS.deg, tamamFadhlDair2DMS.min);
+      const fadhlDairDMS = decToDegMinSec(fadhlDairDec);
+      const step87 = { num: 87, name: "Fadhl Ad-Dair", val: formatDMS(fadhlDairDMS), part: 4 };
+      // Step 88: Jamia Asr
+      const jamiaAsrHM = convertToTimeBox(fadhlDairDMS.deg, fadhlDairDMS.min);
+      const step88 = { num: 88, name: "Jamia Asr (Waktu Ashar)", val: formatHM(jamiaAsrHM.h, jamiaAsrHM.m, jamiaAsrHM.s), part: 4 };
+      // Step 89: Ad-Dair Bain Al-Asr wa Al-Maghrib
+      let adDairBainDec = nishfuNaharMar'iMaghribDec - fadhlDairDec;
+      const adDairBainDMS = decToDegMinSec(adDairBainDec);
+      const step89 = { num: 89, name: "Ad-Dair Bain Al-Asr wa Al-Maghrib", val: formatDMS(adDairBainDMS), part: 4 };
+      // Step 90: Jamia Bain Al-Asr wa Al-Maghrib
+      const jamiaBainHM = convertToTimeBox(adDairBainDMS.deg, adDairBainDMS.min);
+      const step90 = { num: 90, name: "Durasi Bain Al-Asr wa Maghrib", val: `${jamiaBainHM.h} Jam ${jamiaBainHM.m} Menit`, part: 4 };
+
+      // [BAGIAN 10: PERHITUNGAN ARAH KIBLAT (SAMT AL-QIBLAH)]
+      // Step 91: Thul Balad Kota
+      const thulBaladKotaDMS = { deg: appState.longDeg, min: appState.longMin, sec: 0 };
+      const step91 = { num: 91, name: `طول البلد ${appState.cityName}`, val: `${formatDMS(thulBaladKotaDMS)} (${appState.longDir})`, part: 4 };
+      // Step 92: Thul Balad Makkah
+      const step92 = { num: 92, name: "Thul Balad Makkah", val: "39° 57' BT", part: 4 };
+      // Step 93: Fadhl Thul
+      let fadhlThulDec = Math.abs(degToDec(appState.longDeg, appState.longMin) - degToDec(39, 57));
+      const fadhlThulDMS = decToDegMinSec(fadhlThulDec);
+      const step93 = { num: 93, name: "Fadhl Thul", val: formatDMS(fadhlThulDMS), part: 4 };
+      // Step 94: Ardhul Balad Kota
+      const step94 = { num: 94, name: "Ardhul Balad Kota", val: `${formatDMS(ardhulBaladDMS)} (${appState.latDir})`, part: 4 };
+      // Step 95: Logsin Ardhul Balad Kota
+      const step95 = { num: 95, name: "Logsin Ardhul Balad Kota", val: logsinArdhul.toFixed(5), part: 4 };
+      // Step 96: Ardhul Balad Makkah
+      const step96 = { num: 96, name: "Ardhul Balad Makkah", val: "21° 30' LU (Logsin: 9.56408)", part: 4 };
+      // Step 97: Logsin Bu'dul Quthr Qibla
+      let logsinBudulQuthrQibla = logsinArdhul + 9.56408;
+      if (logsinBudulQuthrQibla > 10.000) logsinBudulQuthrQibla -= 10.000;
+      const step97 = { num: 97, name: "Logsin Bu'dul Quthr Qibla", val: logsinBudulQuthrQibla.toFixed(5), part: 4 };
+      // Step 98: Bu'dul Quthr Qibla (DMS)
+      const budulQuthrQiblaDMS = reverseLogsin(logsinBudulQuthrQibla);
+      const step98 = { num: 98, name: "Bu'dul Quthr Qibla (DMS)", val: formatDMS(budulQuthrQiblaDMS), part: 4 };
+      // Step 99: Logcos Ardhul Balad Kota
+      const step99 = { num: 99, name: "Logcos Ardhul Balad Kota", val: logcosArdhul.toFixed(5), part: 4 };
+      // Step 100: Logcos Ardhul Balad Makkah
+      const step100 = { num: 100, name: "Logcos Ardhul Balad Makkah", val: "21° 30' (Logcos: 9.96868)", part: 4 };
+      // Step 101: Logsin Al-Ashl Al-Mutlaq Qibla
+      let logsinAshlMutlaqQibla = logcosArdhul + 9.96868;
+      if (logsinAshlMutlaqQibla > 10.000) logsinAshlMutlaqQibla -= 10.000;
+      const step101 = { num: 101, name: "Logsin Al-Ashl Al-Mutlaq Qibla", val: logsinAshlMutlaqQibla.toFixed(5), part: 4 };
+      // Step 102: Al-Ashl Al-Mutlaq Qibla (DMS)
+      const ashlMutlaqQiblaDMS = reverseLogsin(logsinAshlMutlaqQibla);
+      const step102 = { num: 102, name: "Al-Ashl Al-Mutlaq Qibla (DMS)", val: formatDMS(ashlMutlaqQiblaDMS), part: 4 };
+      // Step 103: Logsin Nishful Fadhlah Qibla
+      const logsinNishfulFadhlaQibla = (logsinBudulQuthrQibla + 10.000) - logsinAshlMutlaqQibla;
+      const step103 = { num: 103, name: "Logsin Nishful Fadhlah Qibla", val: logsinNishfulFadhlaQibla.toFixed(5), part: 4 };
+      // Step 104: Nishful Fadhlah Qibla (DMS)
+      const nishfulFadhlaQiblaDMS = reverseLogsin(logsinNishfulFadhlaQibla);
+      const step104 = { num: 104, name: "Nishful Fadhlah Qibla (DMS)", val: formatDMS(nishfulFadhlaQiblaDMS), part: 4 };
+      // Step 105: Nishfu Qaws An-Nahar Qibla
+      let nishfuNaharQiblaDec = 90 - degToDec(nishfulFadhlaQiblaDMS.deg, nishfulFadhlaQiblaDMS.min);
+      const nishfuNaharQiblaDMS = decToDegMinSec(nishfuNaharQiblaDec);
+      const step105 = { num: 105, name: "Nishfu Qaws An-Nahar Qibla", val: formatDMS(nishfuNaharQiblaDMS), part: 4 };
+      // Step 106: Logcos Fadhl Thul
+      const logcosFadhlThul = getLogcos(fadhlThulDMS.deg, fadhlThulDMS.min);
+      const step106 = { num: 106, name: "Logcos Fadhl Thul", val: logcosFadhlThul.toFixed(5), part: 4 };
+      // Step 107: Logsin Al-Majmu' 1 Qibla
+      let logsinMajmu1Qibla = logcosFadhlThul + logsinAshlMutlaqQibla;
+      if (logsinMajmu1Qibla > 10.000) logsinMajmu1Qibla -= 10.000;
+      const step107 = { num: 107, name: "Logsin Al-Majmu' 1 Qibla", val: logsinMajmu1Qibla.toFixed(5), part: 4 };
+      // Step 108: Al-Majmu' 1 Qibla (DMS)
+      const majmu1QiblaDMS = reverseLogsin(logsinMajmu1Qibla);
+      const step108 = { num: 108, name: "Al-Majmu' 1 Qibla (DMS)", val: formatDMS(majmu1QiblaDMS), part: 4 };
+      // Step 109: Sinus Al-Majmu' 1 Qibla
+      const sinMajmu1Qibla = getSinus(majmu1QiblaDMS.deg, majmu1QiblaDMS.min);
+      const step109 = { num: 109, name: "Sinus Al-Majmu' 1 Qibla", val: sinMajmu1Qibla.toFixed(5), part: 4 };
+      // Step 110: Sinus Bu'dul Quthr Qibla
+      const sinBudulQuthrQibla = getSinus(budulQuthrQiblaDMS.deg, budulQuthrQiblaDMS.min);
+      const step110 = { num: 110, name: "Sinus Bu'dul Quthr Qibla", val: sinBudulQuthrQibla.toFixed(5), part: 4 };
+      // Step 111: Sinus Irtifa' Qibla
+      const isLatNorth = (appState.latDir === "N");
+      const sinIrtifaQibla = isLatNorth ? (sinMajmu1Qibla + sinBudulQuthrQibla) : (sinMajmu1Qibla - sinBudulQuthrQibla);
+      const step111 = { num: 111, name: "Sinus Irtifa' Qibla", val: sinIrtifaQibla.toFixed(5), part: 4 };
+      // Step 112: Irtifa' Qibla (DMS)
+      const irtifaQiblaDMS = reverseSinus(sinIrtifaQibla);
+      const step112 = { num: 112, name: "Irtifa' Qibla (DMS)", val: formatDMS(irtifaQiblaDMS), part: 4 };
+      // Step 113: Logsin Fadhl Thul
+      const logsinFadhlThul = getLogsin(fadhlThulDMS.deg, fadhlThulDMS.min);
+      const step113 = { num: 113, name: "Logsin Fadhl Thul", val: logsinFadhlThul.toFixed(5), part: 4 };
+      // Step 114: Logsin Al-Majmu' 2 Qibla
+      let logsinMajmu2Qibla = 9.96868 + logsinFadhlThul;
+      if (logsinMajmu2Qibla > 10.000) logsinMajmu2Qibla -= 10.000;
+      const step114 = { num: 114, name: "Logsin Al-Majmu' 2 Qibla", val: logsinMajmu2Qibla.toFixed(5), part: 4 };
+      // Step 115: Al-Majmu' 2 Qibla (DMS)
+      const majmu2QiblaDMS = reverseLogsin(logsinMajmu2Qibla);
+      const step115 = { num: 115, name: "Al-Majmu' 2 Qibla (DMS)", val: formatDMS(majmu2QiblaDMS), part: 4 };
+      // Step 116: Logcos Irtifa' Qibla
+      const logcosIrtifaQibla = getLogcos(irtifaQiblaDMS.deg, irtifaQiblaDMS.min);
+      const step116 = { num: 116, name: "Logcos Irtifa' Qibla", val: logcosIrtifaQibla.toFixed(5), part: 4 };
+      // Step 117: Logsin Samt Al-Qiblah
+      const logsinSamtQiblah = (logsinMajmu2Qibla + 10.000) - logcosIrtifaQibla;
+      const step117 = { num: 117, name: "Logsin Samt Al-Qiblah", val: logsinSamtQiblah.toFixed(5), part: 4 };
+      // Step 118: Samt Al-Qiblah (DMS Final Arah Kiblat)
+      const samtQiblahDMS = reverseLogsin(logsinSamtQiblah);
+      const step118 = { num: 118, name: "Samt Al-Qiblah (Arah Kiblat)", val: `${formatDMS(samtQiblahDMS)} UB`, part: 4 };
+
+      // Push all 118 steps to stepsData array
+      stepsData = [
+        step1, step2, step3, step4, step5, step6, step7, step8, step9, step10,
+        step11, step12, step13, step14, step15, step16, step17, step18, step19, step20,
+        step21, step22, step23, step24, step25, step26, step27, step28, step29, step30,
+        step31, step32, step33, step34, step35, step36, step37, step38, step39, step40,
+        step41, step42, step43, step44, step45, step46, step47, step48, step49, step50,
+        step51, step52, step53, step54, step55, step56, step57, step58, step59, step60,
+        step61, step62, step63, step64, step65, step66, step67, step68, step69, step70,
+        step71, step72, step73, step74, step75, step76, step77, step78, step79, step80,
+        step81, step82, step83, step84, step85, step86, step87, step88, step89, step90,
+        step91, step92, step93, step94, step95, step96, step97, step98, step99, step100,
+        step101, step102, step103, step104, step105, step106, step107, step108, step109, step110,
+        step111, step112, step113, step114, step115, step116, step117, step118
+      ];
+
+      // Update Summary Modal DOM Elements
+      document.getElementById('summaryShubuh').innerText = formatHM(jamiaShubuhHM.h, jamiaShubuhHM.m, jamiaShubuhHM.s);
+      document.getElementById('summaryDhuha').innerText = formatHM(jamiaDhuhaHM.h, jamiaDhuhaHM.m, jamiaDhuhaHM.s);
+      document.getElementById('summaryAshar').innerText = formatHM(jamiaAsrHM.h, jamiaAsrHM.m, jamiaAsrHM.s);
+      document.getElementById('summaryMaghrib').innerText = formatHM(jamiaMaghribHM.h, jamiaMaghribHM.m, jamiaMaghribHM.s);
+      document.getElementById('summaryIsya').innerText = formatHM(jamiaIsyaHM.h, jamiaIsyaHM.m, jamiaIsyaHM.s);
+      document.getElementById('summaryDurasiAsharMaghrib').innerText = `${jamiaBainHM.h} Jam ${jamiaBainHM.m} Menit`;
+      document.getElementById('summaryQibla').innerText = `${formatDMS(samtQiblahDMS)} (Utara ke Barat)`;
+      
+      const monthNames = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      document.getElementById('summaryLocationSubtitle').innerText = `Lokasi: ${appState.cityName} | Tanggal: ${appState.day} ${monthNames[appState.month]}`;
+      document.getElementById('summaryThulBaladText').innerText = `* Referensi koordinat Thul Balad ${appState.cityName}: ${appState.longDeg}° ${appState.longMin}' ${appState.longDir}`;
+
+      // Render UI steps based on current tab
+      renderStepsUI();
+    }
+
+    /* ===================================================
+       UI RENDER & ANIMATION ENGINE
+       =================================================== */
+    function renderStepsUI() {
+      const container = document.getElementById('stepsContainer');
+      container.innerHTML = '';
+
+      let activePart = 1;
+      if (appState.activeTab === 'tab-part2') activePart = 2;
+      else if (appState.activeTab === 'tab-part3') activePart = 3;
+      else if (appState.activeTab === 'tab-part4') activePart = 4;
+
+      const filteredSteps = stepsData.filter(s => s.part === activePart);
+
+      filteredSteps.forEach(step => {
+        const row = document.createElement('div');
+        row.className = "p-3.5 hover:bg-slate-50 transition flex items-center justify-between text-xs sm:text-sm";
+
+        // Find key glossary term if exists
+        const termKey = Object.keys(TERM_GLOSSARY).find(k => step.name.includes(k));
+        let titleHtml = `<span class="font-medium text-slate-700">Langkah ${step.num}: ${step.name}</span>`;
+        
+        if (termKey) {
+          titleHtml = `<span class="font-medium text-slate-700 hover:text-emerald-700 cursor-pointer underline decoration-dashed underline-offset-4 decoration-emerald-400" onclick="showTermInfo('${termKey}')">
+                        Langkah ${step.num}: ${step.name} (${TERM_GLOSSARY[termKey].ar})
+                      </span>`;
+        }
+
+        row.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-md bg-slate-100 text-slate-500 font-mono text-[11px] flex items-center justify-center font-bold">${step.num}</span>
+            ${titleHtml}
+          </div>
+          <div class="font-mono font-bold text-slate-900 bg-slate-100/80 px-3 py-1 rounded-lg border border-slate-200/60 number-display" id="step-val-${step.num}">
+            ${step.val}
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      triggerNumberRollAnimation();
+    }
+
+    // Number rolling effect animation on calculation updates
+    function triggerNumberRollAnimation() {
+      const activePart = appState.activeTab === 'tab-part1' ? 1 : appState.activeTab === 'tab-part2' ? 2 : appState.activeTab === 'tab-part3' ? 3 : 4;
+      const filteredSteps = stepsData.filter(s => s.part === activePart);
+
+      filteredSteps.forEach(step => {
+        const el = document.getElementById(`step-val-${step.num}`);
+        if (!el) return;
+
+        let counter = 0;
+        const targetVal = step.val;
+        el.classList.add('number-animating');
+
+        const interval = setInterval(() => {
+          // Generate random degree/number sequence placeholder
+          const rand1 = Math.floor(Math.random() * 90);
+          const rand2 = Math.floor(Math.random() * 60);
+          el.innerText = `${rand1}° ${rand2}'`;
+
+          counter++;
+          if (counter > 5) {
+            clearInterval(interval);
+            el.innerText = targetVal;
+            el.classList.remove('number-animating');
+          }
+        }, 30);
+      });
+    }
+
+    function switchTab(tabId) {
+      appState.activeTab = tabId;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'text-emerald-700', 'shadow-sm', 'font-semibold');
+        btn.classList.add('hover:text-slate-900');
+      });
+      const activeBtn = document.getElementById(`btn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-white', 'text-emerald-700', 'shadow-sm', 'font-semibold');
+        activeBtn.classList.remove('hover:text-slate-900');
+      }
+      renderStepsUI();
+    }
+
+    /* ===================================================
+       MODALS & DIALOG HANDLERS
+       =================================================== */
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.remove('hidden');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+
+    function setDir(inputGroup, val) {
+      document.getElementById(inputGroup).value = val;
+      if (inputGroup === 'latDir') {
+        document.getElementById('btnLatS').className = val === 'S' ? 'flex-1 py-1 text-xs rounded border bg-emerald-600 text-white font-medium' : 'flex-1 py-1 text-xs rounded border bg-slate-100 text-slate-600';
+        document.getElementById('btnLatN').className = val === 'N' ? 'flex-1 py-1 text-xs rounded border bg-emerald-600 text-white font-medium' : 'flex-1 py-1 text-xs rounded border bg-slate-100 text-slate-600';
+      } else {
+        document.getElementById('btnLongE').className = val === 'E' ? 'flex-1 py-1 text-xs rounded border bg-emerald-600 text-white font-medium' : 'flex-1 py-1 text-xs rounded border bg-slate-100 text-slate-600';
+        document.getElementById('btnLongW').className = val === 'W' ? 'flex-1 py-1 text-xs rounded border bg-emerald-600 text-white font-medium' : 'flex-1 py-1 text-xs rounded border bg-slate-100 text-slate-600';
+      }
+    }
+
+    function applyPresetCity() {
+      const preset = document.getElementById('presetCitySelect').value;
+      if (preset === 'pasuruan') {
+        appState.cityName = "Pasuruan"; appState.latDeg = 7; appState.latMin = 39; appState.latDir = "S"; appState.longDeg = 112; appState.longMin = 54; appState.longDir = "E";
+      } else if (preset === 'surabaya') {
+        appState.cityName = "Surabaya"; appState.latDeg = 7; appState.latMin = 15; appState.latDir = "S"; appState.longDeg = 112; appState.longMin = 45; appState.longDir = "E";
+      } else if (preset === 'jakarta') {
+        appState.cityName = "Jakarta"; appState.latDeg = 6; appState.latMin = 12; appState.latDir = "S"; appState.longDeg = 106; appState.longMin = 49; appState.longDir = "E";
+      } else if (preset === 'makkah') {
+        appState.cityName = "Makkah"; appState.latDeg = 21; appState.latMin = 25; appState.latDir = "N"; appState.longDeg = 39; appState.longMin = 49; appState.longDir = "E";
+      }
+      
+      document.getElementById('latDeg').value = appState.latDeg;
+      document.getElementById('latMin').value = appState.latMin;
+      setDir('latDir', appState.latDir);
+      document.getElementById('longDeg').value = appState.longDeg;
+      document.getElementById('longMin').value = appState.longMin;
+      setDir('longDir', appState.longDir);
+    }
+
+    function getGPSLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+          const lat = position.coords.latitude;
+          const long = position.coords.longitude;
+
+          const latDms = decToDegMinSec(Math.abs(lat));
+          const longDms = decToDegMinSec(Math.abs(long));
+
+          appState.cityName = "Lokasi GPS";
+          appState.latDeg = latDms.deg;
+          appState.latMin = latDms.min;
+          appState.latDir = lat < 0 ? "S" : "N";
+          appState.longDeg = longDms.deg;
+          appState.longMin = longDms.min;
+          appState.longDir = long < 0 ? "W" : "E";
+
+          document.getElementById('latDeg').value = appState.latDeg;
+          document.getElementById('latMin').value = appState.latMin;
+          setDir('latDir', appState.latDir);
+          document.getElementById('longDeg').value = appState.longDeg;
+          document.getElementById('longMin').value = appState.longMin;
+          setDir('longDir', appState.longDir);
+
+          saveLocationAndRecalculate();
+          alert("Lokasi GPS berhasil diambil & dipasang!");
+        }, () => {
+          alert("Gagal mengambil lokasi GPS. Pastikan izin akses lokasi aktif.");
+        });
+      } else {
+        alert("Browser tidak mendukung Web Geolocation API.");
+      }
+    }
+
+    function saveLocationAndRecalculate() {
+      appState.latDeg = parseInt(document.getElementById('latDeg').value) || 0;
+      appState.latMin = parseInt(document.getElementById('latMin').value) || 0;
+      appState.latDir = document.getElementById('latDir').value;
+      appState.longDeg = parseInt(document.getElementById('longDeg').value) || 0;
+      appState.longMin = parseInt(document.getElementById('longMin').value) || 0;
+      appState.longDir = document.getElementById('longDir').value;
+
+      document.getElementById('btnLocationLabel').innerText = `${appState.cityName} (${appState.latDeg}° ${appState.latMin}' L${appState.latDir})`;
+      closeModal('locationModal');
+      runCalculations();
+    }
+
+    function saveDateAndRecalculate() {
+      appState.day = parseInt(document.getElementById('inputDay').value) || 21;
+      appState.month = parseInt(document.getElementById('inputMonth').value) || 4;
+
+      const monthNames = ["", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+      document.getElementById('btnDateLabel').innerText = `${appState.day} ${monthNames[appState.month]}`;
+      closeModal('dateModal');
+      runCalculations();
+    }
+
+    function showTermInfo(termKey) {
+      const term = TERM_GLOSSARY[termKey] || { ar: "معرفة", desc: "Istilah perhitungan Falakiyah." };
+      document.getElementById('termModalTitle').innerText = `Istilah: ${termKey}`;
+      document.getElementById('termArabicText').innerText = term.ar;
+      document.getElementById('termModalDesc').innerText = term.desc;
+      openModal('termModal');
+    }
+
+    // Hijri Calendar Builder
+    function openHijriModal() {
+      const grid = document.getElementById('hijriCalendarGrid');
+      grid.innerHTML = '';
+      
+      // Build 30 calendar days for Safar 1448 H
+      for (let i = 1; i <= 35; i++) {
+        const cell = document.createElement('div');
+        if (i <= 30) {
+          const isToday = (i === 14);
+          cell.className = `p-2 rounded-xl border flex flex-col justify-between items-center cursor-pointer transition ${isToday ? 'bg-emerald-600 text-white font-bold border-emerald-700 shadow-md' : 'bg-slate-50 border-slate-200 hover:bg-emerald-50 text-slate-800'}`;
+          cell.innerHTML = `
+            <span class="text-xs font-bold font-mono">${i}</span>
+            <span class="${isToday ? 'text-emerald-100' : 'text-slate-400'} text-[10px]">${i + 10} Agt</span>
+          `;
+          cell.onclick = () => alert(`Tanggal Hijriyah: ${i} Safar 1448 H\nTanggal Masehi: ${i + 10} Agustus 2026 M`);
+        } else {
+          cell.className = "p-2 opacity-0";
+        }
+        grid.appendChild(cell);
+      }
+      openModal('hijriModal');
+    }
+
+    // Live Clock for Waktu Istiwa' (WIS)
+    function startWISClock() {
+      setInterval(() => {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        document.getElementById('wisClock').innerText = `${h}:${m}:${s}`;
+      }, 1000);
+    }
+
+    /* ===================================================
+       INITIALIZATION
+       =================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      startWISClock();
+      runCalculations();
+    });
+  </script>
+</body>
+</html>
